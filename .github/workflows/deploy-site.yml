@@ -1,0 +1,338 @@
+name: Deploy Markdown Website
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          
+      - name: Create website structure
+        run: |
+          mkdir -p _site
+          cp *.md _site/
+          
+      - name: Create index.html
+        run: |
+          cat > _site/index.html << 'EOL'
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>Curso de Python</title>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.2/marked.min.js"></script>
+              <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/highlight.min.js"></script>
+              <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.5.1/styles/default.min.css">
+              <style>
+                  :root {
+                      --sidebar-width: 250px;
+                      --primary-color: #3498db;
+                      --secondary-color: #2c3e50;
+                      --bg-color: #f8f9fa;
+                      --text-color: #333;
+                      --sidebar-bg: #2c3e50;
+                      --sidebar-text: #ecf0f1;
+                  }
+          
+                  body {
+                      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                      margin: 0;
+                      padding: 0;
+                      display: flex;
+                      color: var(--text-color);
+                      background-color: var(--bg-color);
+                  }
+          
+                  #sidebar {
+                      width: var(--sidebar-width);
+                      height: 100vh;
+                      background-color: var(--sidebar-bg);
+                      color: var(--sidebar-text);
+                      position: fixed;
+                      overflow-y: auto;
+                      transition: transform 0.3s ease;
+                  }
+          
+                  #sidebar h1 {
+                      padding: 20px;
+                      margin: 0;
+                      font-size: 1.5rem;
+                      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                  }
+          
+                  #sidebar ul {
+                      list-style-type: none;
+                      padding: 0;
+                      margin: 0;
+                  }
+          
+                  #sidebar ul li {
+                      padding: 10px 20px;
+                      cursor: pointer;
+                      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                      transition: background-color 0.2s;
+                  }
+          
+                  #sidebar ul li:hover {
+                      background-color: rgba(255, 255, 255, 0.1);
+                  }
+          
+                  #sidebar ul li.active {
+                      background-color: var(--primary-color);
+                  }
+          
+                  #content {
+                      margin-left: var(--sidebar-width);
+                      padding: 20px;
+                      flex: 1;
+                      max-width: 800px;
+                      line-height: 1.6;
+                  }
+          
+                  @media (max-width: 768px) {
+                      #sidebar {
+                          transform: translateX(-100%);
+                          z-index: 100;
+                      }
+          
+                      #sidebar.active {
+                          transform: translateX(0);
+                      }
+          
+                      #content {
+                          margin-left: 0;
+                          padding: 15px;
+                          width: 100%;
+                      }
+          
+                      #toggle-sidebar {
+                          display: block;
+                      }
+                  }
+          
+                  #toggle-sidebar {
+                      position: fixed;
+                      top: 10px;
+                      left: 10px;
+                      z-index: 101;
+                      background-color: var(--primary-color);
+                      color: white;
+                      border: none;
+                      border-radius: 5px;
+                      padding: 8px 12px;
+                      cursor: pointer;
+                      display: none;
+                  }
+          
+                  pre {
+                      background-color: #f5f5f5;
+                      padding: 15px;
+                      border-radius: 5px;
+                      overflow-x: auto;
+                  }
+          
+                  code {
+                      font-family: 'Courier New', Courier, monospace;
+                  }
+          
+                  table {
+                      border-collapse: collapse;
+                      width: 100%;
+                      margin-bottom: 20px;
+                  }
+          
+                  table, th, td {
+                      border: 1px solid #ddd;
+                  }
+          
+                  th, td {
+                      padding: 12px;
+                      text-align: left;
+                  }
+          
+                  th {
+                      background-color: #f2f2f2;
+                  }
+          
+                  blockquote {
+                      border-left: 4px solid var(--primary-color);
+                      padding-left: 15px;
+                      color: #666;
+                      margin-left: 0;
+                  }
+          
+                  a {
+                      color: var(--primary-color);
+                      text-decoration: none;
+                  }
+          
+                  a:hover {
+                      text-decoration: underline;
+                  }
+          
+                  img {
+                      max-width: 100%;
+                      height: auto;
+                  }
+          
+                  h1, h2, h3, h4, h5, h6 {
+                      margin-top: 1.5em;
+                      margin-bottom: 0.5em;
+                      color: var(--secondary-color);
+                  }
+          
+                  hr {
+                      border: 0;
+                      height: 1px;
+                      background-color: #ddd;
+                      margin: 2em 0;
+                  }
+          
+                  /* Estilos para aside */
+                  aside {
+                      background-color: #f1f8ff;
+                      border-left: 4px solid #3498db;
+                      padding: 15px;
+                      margin: 20px 0;
+                      border-radius: 0 5px 5px 0;
+                  }
+              </style>
+          </head>
+          <body>
+              <button id="toggle-sidebar">☰ Menú</button>
+              <div id="sidebar">
+                  <h1>Curso de Python</h1>
+                  <ul id="menu">
+                      <li data-file="Tema 0.md">Tema 0: Intro</li>
+                      <li data-file="Tema 1.md">Tema 1: Conceptos básicos</li>
+                      <li data-file="Tema 2.md">Tema 2: Variables y tipos</li>
+                      <li data-file="Tema 3.md">Tema 3: Estructuras de datos</li>
+                      <li data-file="Tema 4.md">Tema 4: Control de flujo</li>
+                      <li data-file="Tema 5.md">Tema 5: Funciones</li>
+                      <li data-file="Tema 6.md">Tema 6: Manejo de archivos</li>
+                      <li data-file="Tema 7.md">Tema 7: POO</li>
+                      <li data-file="Tema 8.md">Tema 8: Módulos y errores</li>
+                      <li data-file="Tema 9.md">Tema 9: Módulos adicionales</li>
+                      <li data-file="Pandas.md">Tema adicional: Pandas</li>
+                  </ul>
+              </div>
+              <div id="content">
+                  <h1>Bienvenido al Curso de Python</h1>
+                  <p>Selecciona un tema del menú lateral para comenzar.</p>
+                  <p>Este curso cubre desde los conceptos básicos de Python hasta temas avanzados como programación orientada a objetos, manejo de archivos y módulos.</p>
+              </div>
+          
+              <script>
+                  // Configuración de marked para resaltar código
+                  marked.setOptions({
+                      highlight: function(code, lang) {
+                          if (lang && hljs.getLanguage(lang)) {
+                              return hljs.highlight(code, { language: lang }).value;
+                          } else {
+                              return hljs.highlightAuto(code).value;
+                          }
+                      },
+                      breaks: true
+                  });
+          
+                  // Obtener elementos DOM
+                  const sidebar = document.getElementById('sidebar');
+                  const toggleButton = document.getElementById('toggle-sidebar');
+                  const content = document.getElementById('content');
+                  const menuItems = document.querySelectorAll('#menu li');
+          
+                  // Toggle del sidebar en dispositivos móviles
+                  toggleButton.addEventListener('click', () => {
+                      sidebar.classList.toggle('active');
+                  });
+          
+                  // Cargar archivo Markdown
+                  async function loadMarkdown(filename) {
+                      try {
+                          const response = await fetch(filename);
+                          if (!response.ok) {
+                              throw new Error(`Error al cargar ${filename}: ${response.status}`);
+                          }
+                          const text = await response.text();
+                          content.innerHTML = marked.parse(text);
+                          
+                          // Aplicar resaltado de sintaxis a bloques de código
+                          document.querySelectorAll('pre code').forEach((block) => {
+                              hljs.highlightBlock(block);
+                          });
+                          
+                          // Actualizar clase active en el menú
+                          menuItems.forEach(item => {
+                              if (item.getAttribute('data-file') === filename) {
+                                  item.classList.add('active');
+                              } else {
+                                  item.classList.remove('active');
+                              }
+                          });
+                          
+                          // Cerrar el sidebar en móvil después de seleccionar
+                          if (window.innerWidth <= 768) {
+                              sidebar.classList.remove('active');
+                          }
+                      } catch (error) {
+                          console.error(error);
+                          content.innerHTML = `<h2>Error</h2><p>${error.message}</p>`;
+                      }
+                  }
+          
+                  // Agregar event listeners a los items del menú
+                  menuItems.forEach(item => {
+                      item.addEventListener('click', () => {
+                          const filename = item.getAttribute('data-file');
+                          loadMarkdown(filename);
+                      });
+                  });
+          
+                  // Comprobar si hay un hash en la URL para cargar un archivo específico
+                  if (window.location.hash) {
+                      const filename = window.location.hash.substring(1);
+                      loadMarkdown(filename);
+                  }
+              </script>
+          </body>
+          </html>
+          EOL
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: '_site'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2
