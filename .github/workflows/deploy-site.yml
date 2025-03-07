@@ -26,6 +26,7 @@ jobs:
         run: |
           mkdir -p _site
           cp *.md _site/
+          cp *.csv _site/
           
       - name: Create index.html
         run: |
