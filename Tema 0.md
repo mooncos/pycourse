@@ -2,6 +2,20 @@
 
 ---
 
+# ¡Hola a todos!
+
+## Marcos Gómez
+**Researcher en visión por ordenador y robótica 5G** | Ericsson
+
+📍 Estocolmo, Suecia  
+✉️ marcosgb@kth.se (dudas y preguntas podéis usar ese email)
+
+### Experiencia en Enseñanza
+- Co-organizador de Saturdays.AI
+- Profesor de Machine Learning y Deep Learning con Python en Google Summer of Code Initiative
+
+---
+
 # Introducción a Python
 
 <aside>
